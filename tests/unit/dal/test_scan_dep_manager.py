@@ -16,7 +16,7 @@ from datetime import datetime
 from unittest.mock import MagicMock, Mock
 from tests.unit.base_test import BaseDeeptracyTest
 
-from deeptracy_core.dal.scan_dep.manager import add_scan_dep, add_scan_deps, compare_scan_deps
+from deeptracy_core.dal.scan_dep.manager import add_scan_dep, add_scan_deps, compare_scan_deps, get_scan_deps
 from deeptracy_core.dal.scan_dep.model import ScanDep
 
 
@@ -71,9 +71,9 @@ class TestScanManager(BaseDeeptracyTest):
 
     def test_add_scan_deps_valid(self):
         scan_id = '123'
-        deps = ['raw_dep', 'raw_dep1', 'raw_dep2']
+        deps = ['raw_dep:1', 'raw_dep1:2', 'raw_dep2:3']
         dt = datetime.now()
-        add_scan_deps(scan_id, deps, dt, self.mock_session)
+        add_scan_deps(scan_id, [dep.split(':') for dep in deps], dt, self.mock_session)
 
         assert self.mock_session.add_all.called
         kall = self.mock_session.add_all.call_args
@@ -127,3 +127,14 @@ class TestScanManager(BaseDeeptracyTest):
 
         equals = compare_scan_deps('scan_id', 'scan_id2', self.mock_session)
         self.assertFalse(equals)
+
+    def test_get_scan_deps(self):
+        test_scans = [ScanDep(scan_id='123', raw_dep='el1'), ScanDep(scan_id="123", raw_dep='el2')]
+        query_all = Mock()
+        query_all.return_value = test_scans
+
+        self.mock_session.query().filter().all = query_all
+
+        scans = get_scan_deps('123', self.mock_session)
+
+        self.assertTrue(len(test_scans) == len(scans))

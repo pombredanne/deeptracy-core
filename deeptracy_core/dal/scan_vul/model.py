@@ -12,38 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sqlalchemy import Column, String, Sequence, DateTime, ForeignKey
+from sqlalchemy import Column, String, Float, Sequence, ForeignKey
 from sqlalchemy.orm import relationship
 
 from deeptracy_core.dal.database import Base
 
-
 TABLE_ID = Sequence('table_id_seq', start=1)
 
 
-class ScanDep(Base):
-    """SQLAlchemy ScanDep model"""
-    __tablename__ = 'scan_dep'
+class ScanVulnerability(Base):
+    """SQLAlchemy ScanVulnerability model"""
+    __tablename__ = 'scan_vulnerability'
 
     id = Column(String, TABLE_ID, primary_key=True, server_default=TABLE_ID.next_value())
-    scan_id = Column(String, ForeignKey('scan.id'))
-    library = Column(String, nullable=False)
-    version = Column(String, nullable=False)
-    raw_dep = Column(String, nullable=False)
-    found_at = Column(DateTime, nullable=False)
+    scan_id = Column(String, ForeignKey('scan.id'), nullable=False)
+    lang = Column(String, nullable=False)
+    cpe = Column(String, nullable=False)
+    max_score = Column(Float, default=0)
+    scan_dep_id = Column(String, ForeignKey('scan_dep.id'), nullable=False)
 
     scan = relationship('Scan', lazy='subquery')
-    scan_vul = relationship('ScanVulnerability')
-    vulnerabilities_in_scans = relationship('VulnerabilitiesInScans')
+    scan_dep = relationship('ScanDep', lazy='subquery')
 
     def to_dict(self):
-        scan_dep = {
+        return {
             'id': self.id,
             'scan_id': self.scan_id,
-            'library': self.library,
-            'version': self.version,
-            'raw_dep': self.raw_dep,
-            'found_at': self.found_at
+            'lang': self.lang,
+            'cpe': self.cpe,
+            'max_score': self.max_score,
+            'scan_dep_id': self.scan_dep_id
         }
-
-        return scan_dep

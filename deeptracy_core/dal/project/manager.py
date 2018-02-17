@@ -74,6 +74,11 @@ def add_project(
         assert 'webhook_url' in hook_data
         hooks['hook_data'] = json.dumps(hook_data)
 
+    if hook_type == ProjectHookType.EMAIL.name:
+        assert type(hook_data) is dict
+        assert 'email' in hook_data
+        hooks['hook_data'] = json.dumps(hook_data)
+
     # build the project object to persist in session
     project = Project(
         repo=repo,
@@ -162,6 +167,10 @@ def get_projects(session: Session) -> Project:
     return projects
 
 
+def get_projects_count(session: Session) -> int:
+    return session.query(Project).count()
+
+
 def get_projects_by_name_term(term: str, limit: int, session: Session) -> Project:
     """Get project by Name Term
     :param term: (str) Term to search in project names
@@ -171,7 +180,7 @@ def get_projects_by_name_term(term: str, limit: int, session: Session) -> Projec
     :rtype: Project Array
     """
     search_term = '%{}%'.format(term)
-    projects = session.query(Project).filter(Project.name.like(search_term)).limit(limit)
+    projects = session.query(Project).filter(Project.name.ilike(search_term)).limit(limit)
     return projects
 
 
@@ -219,7 +228,6 @@ def update_project(
 
     if hook_data is not None:
         assert type(hook_data) is dict
-        assert 'webhook_url' in hook_data
         update_dict['hook_data'] = json.dumps(hook_data)
 
     session.query(Project).filter(Project.id == id).update(update_dict)
